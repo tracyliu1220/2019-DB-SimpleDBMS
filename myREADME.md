@@ -1,0 +1,18 @@
+# 2019-DB HW2
+
+## Remote
+```
+https://gitlab.com/dbms_2019/0616015/0616015_hw2
+```
+
+## Installation
+
+Prerequisite
+- make
+- cmake
+- git
+- gcc
+- g++
+- python3.6
+
+
