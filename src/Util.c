@@ -31,8 +31,56 @@ void print_prompt(State_t *state) {
 ///
 /// Print the user in the specific format
 ///
-void print_user(User_t *user) {
-    printf("(%d, %s, %s, %d)\n", user->id, user->name, user->email, user->age);
+void print_user(User_t *user, Command_t *cmd) {
+    size_t i;
+    size_t print_idx = 0;
+    size_t default_print = 1;
+
+    for (i = 0; i < cmd->args_len; i ++) {
+        if (!strncmp(cmd->args[i], "id", 2)) {
+            print_idx ++;
+            default_print = 0;
+        }
+        if (!strncmp(cmd->args[i], "name", 4)) {
+            print_idx ++;
+            default_print = 0;
+        }
+        if (!strncmp(cmd->args[i], "email", 5)) {
+            print_idx ++;
+            default_print = 0;
+        }
+        if (!strncmp(cmd->args[i], "age", 3)) {
+            print_idx ++;
+            default_print = 0;
+        }
+    }
+
+    printf("(");
+    for (i = 0; i < cmd->args_len; i ++) {
+        if (!strncmp(cmd->args[i], "id", 2)) {
+            printf("%d", user->id);
+            print_idx --;
+            if (print_idx) printf(", ");
+        }
+        if (!strncmp(cmd->args[i], "name", 4)) {
+            printf("%s", user->name);
+            print_idx --;
+            if (print_idx) printf(", ");
+        }
+        if (!strncmp(cmd->args[i], "email", 5)) {
+            printf("%s", user->email);
+            print_idx --;
+            if (print_idx) printf(", ");
+        }
+        if (!strncmp(cmd->args[i], "age", 3)) {
+            printf("%d", user->age);
+            print_idx --;
+            if (print_idx) printf(", ");
+        }
+    }
+    if (default_print)
+        printf("%d, %s, %s, %d", user->id, user->name, user->email, user->age);
+    printf(")\n");
 }
 
 ///
@@ -140,12 +188,12 @@ int handle_select_cmd(Table_t *table, Command_t *cmd) {
     for (idx = 0; idx < cmd->args_len; idx ++) {
         if (!strncmp(cmd->args[idx], "offset", 6))
             idx_start = atoi(cmd->args[idx + 1]);
-        else if (!strncmp(cmd->args[idx], "limit", 6)) {
+        else if (!strncmp(cmd->args[idx], "limit", 5)) {
             idx_end = idx_start + atoi(cmd->args[idx + 1]);
         }
     }
     for (idx = idx_start; idx < idx_end; idx++) {
-        print_user(get_User(table, idx));
+        print_user(get_User(table, idx), cmd);
     }
     cmd->type = SELECT_CMD;
     return table->len;
