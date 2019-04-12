@@ -15,4 +15,15 @@ Prerequisite
 - g++
 - python3.6
 
+## Compile
+```
+make
+```
 
+## Structure
+- `Command.c`: commands managements
+- `InputBuffer.c`: about inputs from stdin
+- `shell.c`: main function and execution
+- `Table.c`
+- `User.c`
+- `Util.c`: commands' frame
