@@ -111,7 +111,15 @@ int handle_query_cmd(Table_t *table, Command_t *cmd) {
 int handle_insert_cmd(Table_t *table, Command_t *cmd) {
     int ret = 0;
     User_t *user = command_to_User(cmd);
-    if (user) {
+    // implement primary key on user id
+    int legal = 1;
+    size_t idx;
+    for (idx = 0; idx < table->len; idx ++) {
+        User_t *check_user = get_User(table, idx);
+        if (check_user->id == user->id)
+            legal = 0;
+    }
+    if (user && legal) {
         ret = add_User(table, user);
         if (ret > 0) {
             cmd->type = INSERT_CMD;
@@ -127,6 +135,7 @@ int handle_insert_cmd(Table_t *table, Command_t *cmd) {
 ///
 int handle_select_cmd(Table_t *table, Command_t *cmd) {
     size_t idx;
+    // add offset and limit options
     size_t idx_start = 0, idx_end = table->len;
     for (idx = 0; idx < cmd->args_len; idx ++) {
         if (!strncmp(cmd->args[idx], "offset", 6))
