@@ -20,6 +20,7 @@ Command_t* new_Command() {
     cmd->args = NULL;
     cmd->args_len = 0;
     cmd->args_cap = 0;
+    cmd->where_args.up = 0;
     return cmd;
 }
 
