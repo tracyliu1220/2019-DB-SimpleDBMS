@@ -62,12 +62,31 @@ void print_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd
     size_t idx;
     int limit = cmd->cmd_args.sel_args.limit;
     int offset = cmd->cmd_args.sel_args.offset;
+    int idxListCap = idxListLen;
 
     if (offset == -1) {
         offset = 0;
     }
 
-    if (idxList) {
+    for (int i = 0; i < table->len; i ++) {
+        User_t* user = get_User(table, i);
+
+        // modify
+        if(where_test(cmd, user)) {        
+            if (idxListCap == 0 || idxListCap == idxListLen) {
+                int *new_buf = (int*) malloc( sizeof(int) * (idxListCap + 5) );
+                memset(new_buf, 0, sizeof(int) * (idxListCap + 5));
+                memcpy(new_buf, idxList, sizeof(int) * (idxListCap));
+                free(idxList);
+                idxList = new_buf;
+                idxListCap += 5;
+            }
+            idxList[idxListLen] = i;
+            idxListLen ++;
+        }
+    }
+
+    if (cmd->where_args.up) {
         for (idx = offset; idx < idxListLen; idx++) {
             if (limit != -1 && (idx - offset) >= limit) {
                 break;

@@ -3,6 +3,7 @@
 
 #include "Command.h"
 #include "SelectState.h"
+#include "User.h"
 #include <stdio.h>
 
 // parsing
@@ -12,6 +13,7 @@ void where_state_handler(Command_t *cmd, size_t arg_idx) {
 	cmd->where_args.type = 0;
 	cmd->where_args.str_cnt = 0;
 	cmd->where_args.int_cnt = 0;
+    cmd->where_args.up = 1;
     for (int cases = 0; cases < 2; cases ++) {
     	    char *src1 = cmd->args[arg_idx];
     	    char *src2 = cmd->args[arg_idx + 2];
@@ -45,10 +47,10 @@ void where_state_handler(Command_t *cmd, size_t arg_idx) {
                 // set logic
                 if (!strncmp(logic, "=", 1)) logic_mark = 0;
                 else if (!strncmp(logic, "!=", 2)) logic_mark = 1;
-                else if (!strncmp(logic, ">", 1))  logic_mark = 2;
-                else if (!strncmp(logic, "<", 1))  logic_mark = 3;
                 else if (!strncmp(logic, ">=", 2)) logic_mark = 4;
                 else if (!strncmp(logic, "<=", 2)) logic_mark = 5;
+                else if (!strncmp(logic, ">", 1))  logic_mark = 2;
+                else if (!strncmp(logic, "<", 1))  logic_mark = 3;
 
                 cmd->where_args.int_logic[int_cnt] = logic_mark;
     	    	cmd->where_args.int_cnt ++;
@@ -86,7 +88,6 @@ void where_state_handler(Command_t *cmd, size_t arg_idx) {
 }
 
 // true or false
-/*
 int where_test(Command_t *cmd, User_t *user) {
 	int ret, if_and;
 	if (cmd->where_args.type == 1) {
@@ -98,18 +99,38 @@ int where_test(Command_t *cmd, User_t *user) {
 	}
     int ans;
 	for (int i = 0; i < cmd->where_args.str_cnt; i ++) {
+        char *src1;
+        if (!strncmp(cmd->where_args.str_con[i * 2], "name", 4))  src1 = user->name;
+        else src1 = user->email;
+        char *src2 = cmd->where_args.str_con[i * 2 + 1];
 		ans = 0;
-		if (cmd->where_args.str_logic[i] == 0
-			&& (!strcmp(str_con[i * 2], str_con[i * 2 + 1])) )
+        int logic = cmd->where_args.str_logic[i];
+		if (logic == 0 && (!strcmp(src1, src2)) )
 			ans = 1;
-		else if (cmd->where_args.str_logic[i] == 1
-			&& (strcmp(str_con[i * 2], str_con[i * 2 + 1])) )
+		else if (logic == 1 && (strcmp(src1, src2)) )
 			ans = 1;
 		if (if_and) ret = ret && ans;
 		else ret = ret || ans;
 	}
-}
-*/
+	for (int i = 0; i < cmd->where_args.int_cnt; i ++) {
+        int src1;
+        if (!strncmp(cmd->where_args.int_con_left[i], "id", 2))  src1 = user->id;
+        else src1 = user->age;
+        int src2 = cmd->where_args.int_con[i];
+        int logic = cmd->where_args.int_logic[i];
+		ans = 0;
 
+        if (logic == 0 && src1 == src2) ans = 1;
+        else if (logic == 1 && src1 != src2) ans = 1;
+        else if (logic == 2 && src1 > src2) ans = 1;
+        else if (logic == 3 && src1 < src2) ans = 1;
+        else if (logic == 4 && src1 >= src2) ans = 1;
+        else if (logic == 5 && src1 <= src2) ans = 1;
+
+		if (if_and) ret = ret && ans;
+		else ret = ret || ans;
+	}
+    return ret;
+}
 
 #endif

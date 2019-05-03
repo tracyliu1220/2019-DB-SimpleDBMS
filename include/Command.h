@@ -32,6 +32,7 @@ typedef union {
 } CmdArg_t;
 
 typedef struct WhereArgs {
+    int up;
     int type; // 0: 1, 1: and, 2: or
     int str_cnt, int_cnt;
     char **str_con;
