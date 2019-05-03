@@ -31,12 +31,23 @@ typedef union {
     SelectArgs_t sel_args;
 } CmdArg_t;
 
+typedef struct WhereArgs {
+    int type; // 0: 1, 1: and, 2: or
+    int str_cnt, int_cnt;
+    char **str_con;
+    char **int_con_left;
+    int int_con[2];
+    int str_logic[2];
+    int int_logic[2];
+} WhereArgs_t;
+
 typedef struct Command {
     unsigned char type;
     char **args;
     size_t args_len;
     size_t args_cap;
     CmdArg_t cmd_args;
+    WhereArgs_t where_args;
 } Command_t;
 
 Command_t* new_Command();
