@@ -66,16 +66,6 @@ void where_state_handler(Command_t *cmd, size_t arg_idx) {
         }
         arg_idx += 4;
     }
-    /*
-    for (int i = 0; i < cmd->where_args.str_cnt; i ++) {
-    	printf("%s %s", cmd->where_args.str_con[i * 2], cmd->where_args.str_con[i * 2 + 1]);
-        printf(" %d\n", cmd->where_args.str_logic[i]);
-    }
-    for (int i = 0; i < cmd->where_args.int_cnt; i ++) {
-    	printf("%s %d", cmd->where_args.int_con_left[i], cmd->where_args.int_con[i]);
-        printf(" %d\n", cmd->where_args.int_logic[i]);
-    }
-    */
     if (arg_idx == cmd->args_len) {
         return;
     } else if (!strncmp(cmd->args[arg_idx], "offset", 6)) {
