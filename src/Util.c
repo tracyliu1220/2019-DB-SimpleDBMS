@@ -55,6 +55,27 @@ void print_user(User_t *user, SelectArgs_t *sel_args) {
     printf(")\n");
 }
 
+size_t set_idxlist(Table_t *table, int **idxList, size_t idxListLen, Command_t *cmd) {
+    size_t idxListCap = idxListLen;
+    for (int i = 0; i < table->len; i ++) {
+        User_t* user = get_User(table, i);
+
+        if(where_test(cmd, user)) {        
+            if (idxListCap == 0 || idxListCap == idxListLen) {
+                int *new_buf = (int*) malloc( sizeof(int) * (idxListCap + 5) );
+                memset(new_buf, 0, sizeof(int) * (idxListCap + 5));
+                memcpy(new_buf, *idxList, sizeof(int) * (idxListCap));
+                free(*idxList);
+                *idxList = new_buf;
+                idxListCap += 5;
+            }
+            (*idxList)[idxListLen] = i;
+            idxListLen ++;
+        }
+    }
+    return idxListLen;
+}
+
 ///
 /// Print the users for given offset and limit restriction
 ///
@@ -62,29 +83,31 @@ void print_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd
     size_t idx;
     int limit = cmd->cmd_args.sel_args.limit;
     int offset = cmd->cmd_args.sel_args.offset;
-    int idxListCap = idxListLen;
+    // int idxListCap = idxListLen;
 
     if (offset == -1) {
         offset = 0;
     }
 
-    for (int i = 0; i < table->len; i ++) {
-        User_t* user = get_User(table, i);
+    idxListLen = set_idxlist(table, &idxList, idxListLen, cmd);
+    // printf("len=%d\n", idxListLen);
 
-        // modify
-        if(where_test(cmd, user)) {        
-            if (idxListCap == 0 || idxListCap == idxListLen) {
-                int *new_buf = (int*) malloc( sizeof(int) * (idxListCap + 5) );
-                memset(new_buf, 0, sizeof(int) * (idxListCap + 5));
-                memcpy(new_buf, idxList, sizeof(int) * (idxListCap));
-                free(idxList);
-                idxList = new_buf;
-                idxListCap += 5;
-            }
-            idxList[idxListLen] = i;
-            idxListLen ++;
-        }
-    }
+    // for (int i = 0; i < table->len; i ++) {
+    //     User_t* user = get_User(table, i);
+
+    //     if(where_test(cmd, user)) {        
+    //         if (idxListCap == 0 || idxListCap == idxListLen) {
+    //             int *new_buf = (int*) malloc( sizeof(int) * (idxListCap + 5) );
+    //             memset(new_buf, 0, sizeof(int) * (idxListCap + 5));
+    //             memcpy(new_buf, idxList, sizeof(int) * (idxListCap));
+    //             free(idxList);
+    //             idxList = new_buf;
+    //             idxListCap += 5;
+    //         }
+    //         idxList[idxListLen] = i;
+    //         idxListLen ++;
+    //     }
+    // }
 
     if (cmd->where_args.up) {
         for (idx = offset; idx < idxListLen; idx++) {
@@ -116,8 +139,27 @@ int parse_input(char *input, Command_t *cmd) {
             cmd->type = cmd_list[idx].type;
         }
     }
+    // about spaces
     while (token != NULL) {
-        add_Arg(cmd, token);
+        char *op = strpbrk(token, "=<>!");
+        if (op != NULL) {
+            int len;
+            len = (int)(op - token);
+            if (len) {
+                char *left_side = strndup(token, len);
+                add_Arg(cmd, left_side);
+            }
+            len = strspn(op, "=<>!");
+            char *operation = strndup(op, len);
+            add_Arg(cmd, operation);
+            char *right_side = op + len;
+            len = strlen(right_side);
+            if (len) {
+                add_Arg(cmd, right_side);
+            }
+        } else {
+            add_Arg(cmd, token);
+        }
         token = strtok(NULL, " ,\n");
     }
     return cmd->type;
@@ -166,6 +208,9 @@ int handle_query_cmd(Table_t *table, Command_t *cmd) {
     } else if (!strncmp(cmd->args[0], "select", 6)) {
         handle_select_cmd(table, cmd);
         return SELECT_CMD;
+    //} else if (!strncmp(cmd->args[0], "select", 6)) {
+    //    handle_select_cmd(table, cmd);
+    //    return SELECT_CMD;
     } else {
         return UNRECOG_CMD;
     }
@@ -200,6 +245,10 @@ int handle_select_cmd(Table_t *table, Command_t *cmd) {
     print_users(table, NULL, 0, cmd);
     return table->len;
 }
+
+// int handle_update_cmd(Table_t *table, Command_t *cmd) {
+//
+// }
 
 ///
 /// Show the help messages
