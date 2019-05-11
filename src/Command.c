@@ -10,6 +10,7 @@ CMD_t cmd_list[] = {
     { "insert", 6, QUERY_CMD },
     { "select", 6, QUERY_CMD },
     { "update", 6, QUERY_CMD },
+    { "delete", 6, QUERY_CMD },
     { "", 0, UNRECOG_CMD },
 };
 

@@ -70,12 +70,13 @@ void update_user(User_t *user, SetArgs_t *set_args) {
     }
 }
 
-size_t set_idxlist(Table_t *table, int **idxList, size_t idxListLen, Command_t *cmd) {
+// state = 1 if where not in, ex. delete
+size_t set_idxlist(Table_t *table, int **idxList, size_t idxListLen, Command_t *cmd, int state) {
     size_t idxListCap = idxListLen;
     for (int i = 0; i < table->len; i ++) {
         User_t* user = get_User(table, i);
 
-        if(where_test(cmd, user)) {        
+        if(where_test(cmd, user) ^ state) {        
             if (idxListCap == 0 || idxListCap == idxListLen) {
                 int *new_buf = (int*) malloc( sizeof(int) * (idxListCap + 5) );
                 memset(new_buf, 0, sizeof(int) * (idxListCap + 5));
@@ -103,7 +104,7 @@ void print_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd
         offset = 0;
     }
 
-    idxListLen = set_idxlist(table, &idxList, idxListLen, cmd);
+    idxListLen = set_idxlist(table, &idxList, idxListLen, cmd, 0);
 
     if (cmd->where_args.up) {
         for (idx = offset; idx < idxListLen; idx++) {
@@ -127,7 +128,7 @@ int update_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd
     int legal = 1;
     size_t idx;
 
-    idxListLen = set_idxlist(table, &idxList, idxListLen, cmd);
+    idxListLen = set_idxlist(table, &idxList, idxListLen, cmd, 0);
     if (!strncmp(cmd->set_args.field, "id", 2)) {
         if (idxListLen > 1) legal = 0;
         for (idx = 0; idx < idxListLen; idx ++) {
@@ -147,6 +148,22 @@ int update_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd
         ret = 0;
     }
     return ret;
+}
+
+void delete_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd) {
+    size_t idx;
+    int len = 0;
+    idxListLen = set_idxlist(table, &idxList, idxListLen, cmd, 1);
+
+    if (cmd->where_args.up) {
+        for (idx = 0; idx < idxListLen; idx++) {
+            table->users[len] = table->users[idxList[idx]];
+            len ++;
+        }
+    } else {
+        len = 0;
+    }
+    table->len = len;
 }
 
 ///
@@ -234,6 +251,9 @@ int handle_query_cmd(Table_t *table, Command_t *cmd) {
     } else if (!strncmp(cmd->args[0], "update", 6)) {
         handle_update_cmd(table, cmd);
         return SELECT_CMD;
+    } else if (!strncmp(cmd->args[0], "delete", 6)) {
+        handle_delete_cmd(table, cmd);
+        return SELECT_CMD;
     } else {
         return UNRECOG_CMD;
     }
@@ -273,6 +293,15 @@ int handle_update_cmd(Table_t *table, Command_t *cmd) {
     int ret = 0;
     set_state_handler(cmd, 3);
     update_users(table, NULL, 0, cmd);
+    return ret;
+}
+
+int handle_delete_cmd(Table_t *table, Command_t *cmd) {
+    int ret = 0;
+    if (cmd->args_len > 3 && !strncmp(cmd->args[3], "where", 5))
+        where_state_handler(cmd, 4);
+
+    delete_users(table, NULL, 0, cmd);
     return ret;
 }
 
