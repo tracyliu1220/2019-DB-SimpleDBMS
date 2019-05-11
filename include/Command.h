@@ -42,6 +42,13 @@ typedef struct WhereArgs {
     int int_logic[2];
 } WhereArgs_t;
 
+typedef struct SetArgs {
+    int type; // 0: int, 1: str
+    char *field;
+    int set_int;
+    char *set_str;
+} SetArgs_t;
+
 typedef struct Command {
     unsigned char type;
     char **args;
@@ -49,6 +56,7 @@ typedef struct Command {
     size_t args_cap;
     CmdArg_t cmd_args;
     WhereArgs_t where_args;
+    SetArgs_t set_args;
 } Command_t;
 
 Command_t* new_Command();

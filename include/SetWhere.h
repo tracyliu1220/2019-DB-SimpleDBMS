@@ -4,7 +4,7 @@
 #include "Command.h"
 #include "SelectState.h"
 #include "User.h"
-#include <stdio.h>
+#include "stdio.h"
 
 // parsing
 void where_state_handler(Command_t *cmd, size_t arg_idx) {
@@ -66,6 +66,16 @@ void where_state_handler(Command_t *cmd, size_t arg_idx) {
         }
         arg_idx += 4;
     }
+    /*
+    for (int i = 0; i < cmd->where_args.str_cnt; i ++) {
+    	printf("%s %s", cmd->where_args.str_con[i * 2], cmd->where_args.str_con[i * 2 + 1]);
+        printf(" %d\n", cmd->where_args.str_logic[i]);
+    }
+    for (int i = 0; i < cmd->where_args.int_cnt; i ++) {
+    	printf("%s %d", cmd->where_args.int_con_left[i], cmd->where_args.int_con[i]);
+        printf(" %d\n", cmd->where_args.int_logic[i]);
+    }
+    */
     if (arg_idx == cmd->args_len) {
         return;
     } else if (!strncmp(cmd->args[arg_idx], "offset", 6)) {
@@ -73,6 +83,26 @@ void where_state_handler(Command_t *cmd, size_t arg_idx) {
         return;
     } else if (!strncmp(cmd->args[arg_idx], "limit", 5)) {
         limit_state_handler(cmd, arg_idx+1);
+        return;
+    }
+}
+
+void set_state_handler(Command_t *cmd, size_t arg_idx) {
+	int set_type = 0;
+	if (!strncmp(cmd->args[arg_idx], "name", 4)
+		|| !strncmp(cmd->args[arg_idx], "email", 5))
+		set_type = cmd->set_args.type = 1;
+	cmd->set_args.field = cmd->args[arg_idx];
+	if (set_type) { // str
+		cmd->set_args.set_str = cmd->args[arg_idx + 2];
+	} else { // int
+		cmd->set_args.set_int = atoi(cmd->args[arg_idx + 2]);
+	}
+	arg_idx += 3;
+	if (arg_idx == cmd->args_len) {
+        return;
+    } else if (!strncmp(cmd->args[arg_idx], "where", 5)) {
+        where_state_handler(cmd, arg_idx+1);
         return;
     }
 }

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "Command.h"
 #include "SelectState.h"
-#include "SetWhere.h"
+// #include "SetWhere.h"
 
 void field_state_handler(Command_t *cmd, size_t arg_idx) {
     cmd->cmd_args.sel_args.fields = NULL;
