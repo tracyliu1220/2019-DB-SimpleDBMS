@@ -9,7 +9,7 @@ typedef struct State {
 
 State_t* new_State();
 void print_prompt(State_t *state);
-size_t set_idxlist(Table_t *table, int **idxList, size_t idxListLen, Command_t *cmd);
+size_t set_idxlist(Table_t *table, int **idxList, size_t idxListLen, Command_t *cmd, int state);
 void print_user(User_t *user, SelectArgs_t *sel_args);
 void print_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd);
 int parse_input(char *input, Command_t *cmd);
