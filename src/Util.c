@@ -9,6 +9,7 @@
 #include "Command.h"
 #include "Table.h"
 #include "SelectState.h"
+#include "SetWhere.h"
 
 ///
 /// Allocate State_t and initialize some attributes
@@ -55,6 +56,20 @@ void print_user(User_t *user, SelectArgs_t *sel_args) {
     printf(")\n");
 }
 
+void update_user(User_t *user, SetArgs_t *set_args) {
+    if (!strncmp(set_args->field, "id", 2)) {
+        user->id = set_args->set_int;
+    } else if (!strncmp(set_args->field, "name", 4)) {
+        // user->name = set_args->set_str;
+        strcpy(user->name,set_args->set_str);
+    } else if (!strncmp(set_args->field, "email", 5)) {
+        // user->email = set_args->set_str;
+        strcpy(user->email,set_args->set_str);
+    } else if (!strncmp(set_args->field, "age", 3)) {
+        user->age = set_args->set_int;
+    }
+}
+
 size_t set_idxlist(Table_t *table, int **idxList, size_t idxListLen, Command_t *cmd) {
     size_t idxListCap = idxListLen;
     for (int i = 0; i < table->len; i ++) {
@@ -83,31 +98,12 @@ void print_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd
     size_t idx;
     int limit = cmd->cmd_args.sel_args.limit;
     int offset = cmd->cmd_args.sel_args.offset;
-    // int idxListCap = idxListLen;
 
     if (offset == -1) {
         offset = 0;
     }
 
     idxListLen = set_idxlist(table, &idxList, idxListLen, cmd);
-    // printf("len=%d\n", idxListLen);
-
-    // for (int i = 0; i < table->len; i ++) {
-    //     User_t* user = get_User(table, i);
-
-    //     if(where_test(cmd, user)) {        
-    //         if (idxListCap == 0 || idxListCap == idxListLen) {
-    //             int *new_buf = (int*) malloc( sizeof(int) * (idxListCap + 5) );
-    //             memset(new_buf, 0, sizeof(int) * (idxListCap + 5));
-    //             memcpy(new_buf, idxList, sizeof(int) * (idxListCap));
-    //             free(idxList);
-    //             idxList = new_buf;
-    //             idxListCap += 5;
-    //         }
-    //         idxList[idxListLen] = i;
-    //         idxListLen ++;
-    //     }
-    // }
 
     if (cmd->where_args.up) {
         for (idx = offset; idx < idxListLen; idx++) {
@@ -124,6 +120,33 @@ void print_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd
             print_user(get_User(table, idx), &(cmd->cmd_args.sel_args));
         }
     }
+}
+
+int update_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd) {
+    int ret = 1;
+    int legal = 1;
+    size_t idx;
+
+    idxListLen = set_idxlist(table, &idxList, idxListLen, cmd);
+    if (!strncmp(cmd->set_args.field, "id", 2)) {
+        if (idxListLen > 1) legal = 0;
+        for (idx = 0; idx < idxListLen; idx ++) {
+            if (get_User(table, idxList[idx])->id == cmd->set_args.set_int)
+                legal = 0;
+        }
+    }
+
+    if (cmd->where_args.up && legal) {
+        for (idx = 0; idx < idxListLen; idx++)
+            update_user(get_User(table, idxList[idx]), &(cmd->set_args));
+    } else if (!cmd->where_args.up && (strncmp(cmd->set_args.field, "id", 2) || table->len <= 1)) {
+        for (idx = 0; idx < table->len; idx++) {
+            update_user(get_User(table, idx), &(cmd->set_args));
+        }
+    } else {
+        ret = 0;
+    }
+    return ret;
 }
 
 ///
@@ -208,9 +231,9 @@ int handle_query_cmd(Table_t *table, Command_t *cmd) {
     } else if (!strncmp(cmd->args[0], "select", 6)) {
         handle_select_cmd(table, cmd);
         return SELECT_CMD;
-    //} else if (!strncmp(cmd->args[0], "select", 6)) {
-    //    handle_select_cmd(table, cmd);
-    //    return SELECT_CMD;
+    } else if (!strncmp(cmd->args[0], "update", 6)) {
+        handle_update_cmd(table, cmd);
+        return SELECT_CMD;
     } else {
         return UNRECOG_CMD;
     }
@@ -246,9 +269,12 @@ int handle_select_cmd(Table_t *table, Command_t *cmd) {
     return table->len;
 }
 
-// int handle_update_cmd(Table_t *table, Command_t *cmd) {
-//
-// }
+int handle_update_cmd(Table_t *table, Command_t *cmd) {
+    int ret = 0;
+    set_state_handler(cmd, 3);
+    update_users(table, NULL, 0, cmd);
+    return ret;
+}
 
 ///
 /// Show the help messages
