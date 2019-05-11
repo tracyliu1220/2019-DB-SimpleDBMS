@@ -49,6 +49,16 @@ typedef struct SetArgs {
     char *set_str;
 } SetArgs_t;
 
+typedef struct AggreArgs {
+    int up;
+    int sum_up, avg_up;
+    char *sum_field;
+    char *avg_field;
+    int sum_result;
+    double avg_result;
+    int cnt_result;
+} AggreArgs_t;
+
 typedef struct Command {
     unsigned char type;
     char **args;
@@ -57,6 +67,7 @@ typedef struct Command {
     CmdArg_t cmd_args;
     WhereArgs_t where_args;
     SetArgs_t set_args;
+    AggreArgs_t aggre_args;
 } Command_t;
 
 Command_t* new_Command();

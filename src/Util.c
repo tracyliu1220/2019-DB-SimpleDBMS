@@ -56,14 +56,28 @@ void print_user(User_t *user, SelectArgs_t *sel_args) {
     printf(")\n");
 }
 
+void print_aggre(SelectArgs_t *sel_args, AggreArgs_t *aggre_args) {
+    size_t idx;
+    printf("(");
+    for (idx = 0; idx < sel_args->fields_len; idx++) {
+        if (idx > 0) printf(", ");
+        if (!strncmp(sel_args->fields[idx], "sum", 3)) {
+            printf("%d", aggre_args->sum_result);
+        } else if (!strncmp(sel_args->fields[idx], "avg", 3)) {
+            printf("%.3lf", aggre_args->avg_result);
+        } else if (!strncmp(sel_args->fields[idx], "count", 3)) {
+            printf("%d", aggre_args->cnt_result);
+        }
+    }
+    printf(")\n");
+}
+
 void update_user(User_t *user, SetArgs_t *set_args) {
     if (!strncmp(set_args->field, "id", 2)) {
         user->id = set_args->set_int;
     } else if (!strncmp(set_args->field, "name", 4)) {
-        // user->name = set_args->set_str;
         strcpy(user->name,set_args->set_str);
     } else if (!strncmp(set_args->field, "email", 5)) {
-        // user->email = set_args->set_str;
         strcpy(user->email,set_args->set_str);
     } else if (!strncmp(set_args->field, "age", 3)) {
         user->age = set_args->set_int;
@@ -106,19 +120,71 @@ void print_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd
 
     idxListLen = set_idxlist(table, &idxList, idxListLen, cmd, 0);
 
-    if (cmd->where_args.up) {
-        for (idx = offset; idx < idxListLen; idx++) {
-            if (limit != -1 && (idx - offset) >= limit) {
-                break;
+    if (cmd->aggre_args.up) { // aggre
+        cmd->aggre_args.sum_result = 0;
+        cmd->aggre_args.avg_result = 0;
+        cmd->aggre_args.cnt_result = 0;
+        if (cmd->where_args.up) {
+            for (idx = 0; idx < idxListLen; idx++) {
+                User_t *user = get_User(table, idxList[idx]);
+                // sum
+                if (cmd->aggre_args.sum_up
+                    && !strncmp(cmd->aggre_args.sum_field, "id", 2)) {
+                    cmd->aggre_args.sum_result += user->id;
+                } else if (cmd->aggre_args.sum_up
+                    && !strncmp(cmd->aggre_args.sum_field, "age", 3)) {
+                    cmd->aggre_args.sum_result += user->age;
+                }
+                // avg
+                if (cmd->aggre_args.avg_up
+                    && !strncmp(cmd->aggre_args.avg_field, "id", 2)) {
+                    cmd->aggre_args.avg_result += user->id;
+                } else if (cmd->aggre_args.avg_up && 
+                    !strncmp(cmd->aggre_args.avg_field, "age", 3)) {
+                    cmd->aggre_args.avg_result += user->age;
+                }
             }
-            print_user(get_User(table, idxList[idx]), &(cmd->cmd_args.sel_args));
+            cmd->aggre_args.avg_result /= idxListLen;
+            cmd->aggre_args.cnt_result = idxListLen;
+        } else {
+            for (idx = 0; idx < table->len; idx++) {
+                User_t *user = get_User(table, idx);
+                // sum
+                if (cmd->aggre_args.sum_up
+                    && !strncmp(cmd->aggre_args.sum_field, "id", 2)) {
+                    cmd->aggre_args.sum_result += user->id;
+                } else if (cmd->aggre_args.sum_up
+                    && !strncmp(cmd->aggre_args.sum_field, "age", 3)) {
+                    cmd->aggre_args.sum_result += user->age;
+                }
+                // avg
+                if (cmd->aggre_args.avg_up
+                    && !strncmp(cmd->aggre_args.avg_field, "id", 2)) {
+                    cmd->aggre_args.avg_result += user->id;
+                } else if (cmd->aggre_args.avg_up && 
+                    !strncmp(cmd->aggre_args.avg_field, "age", 3)) {
+                    cmd->aggre_args.avg_result += user->age;
+                }
+            }
+            cmd->aggre_args.avg_result /= table->len;
+            cmd->aggre_args.cnt_result = table->len;
         }
-    } else {
-        for (idx = offset; idx < table->len; idx++) {
-            if (limit != -1 && (idx - offset) >= limit) {
-                break;
+        print_aggre(&(cmd->cmd_args.sel_args), &(cmd->aggre_args));
+    } else { // print
+        if (cmd->where_args.up) {
+            for (idx = offset; idx < idxListLen; idx++) {
+                if (limit != -1 && (idx - offset) >= limit) {
+                    break;
+                }
+                print_user(get_User(table, idxList[idx]), &(cmd->cmd_args.sel_args));
             }
-            print_user(get_User(table, idx), &(cmd->cmd_args.sel_args));
+        } else {
+            for (idx = offset; idx < table->len; idx++) {
+                if (limit != -1 && (idx - offset) >= limit) {
+                    break;
+                }
+                print_user(get_User(table, idx), &(cmd->cmd_args.sel_args));
+            }
         }
     }
 }
