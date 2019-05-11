@@ -9,6 +9,9 @@ void field_state_handler(Command_t *cmd, size_t arg_idx) {
     cmd->cmd_args.sel_args.fields_len = 0;
     cmd->cmd_args.sel_args.limit = -1;
     cmd->cmd_args.sel_args.offset = -1;
+    cmd->aggre_args.up = 0;
+    cmd->aggre_args.sum_up = 0;
+    cmd->aggre_args.sum_up = 0;
     while(arg_idx < cmd->args_len) {
         if (!strncmp(cmd->args[arg_idx], "*", 1)) {
             add_select_field(cmd, cmd->args[arg_idx]);
@@ -20,6 +23,24 @@ void field_state_handler(Command_t *cmd, size_t arg_idx) {
             add_select_field(cmd, cmd->args[arg_idx]);
         } else if (!strncmp(cmd->args[arg_idx], "age", 3)) {
             add_select_field(cmd, cmd->args[arg_idx]);
+
+        // aggre
+        } else if (!strncmp(cmd->args[arg_idx], "sum", 3)) {
+            cmd->aggre_args.up = 1;
+            cmd->aggre_args.sum_up = 1;
+            int len = strlen(cmd->args[arg_idx] + 4) - 1;
+            cmd->aggre_args.sum_field = strndup(cmd->args[arg_idx] + 4, len);
+            add_select_field(cmd, cmd->args[arg_idx]);
+        } else if (!strncmp(cmd->args[arg_idx], "avg", 3)) {
+            cmd->aggre_args.up = 1;
+            cmd->aggre_args.avg_up = 1;
+            int len = strlen(cmd->args[arg_idx] + 4) - 1;
+            cmd->aggre_args.avg_field = strndup(cmd->args[arg_idx] + 4, len);
+            add_select_field(cmd, cmd->args[arg_idx]);
+        } else if (!strncmp(cmd->args[arg_idx], "count", 5)) {
+            cmd->aggre_args.up = 1;
+            add_select_field(cmd, cmd->args[arg_idx]);
+
         } else if (!strncmp(cmd->args[arg_idx], "from", 4)) {
             table_state_handler(cmd, arg_idx+1);
             return;

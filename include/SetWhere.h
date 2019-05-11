@@ -6,7 +6,6 @@
 #include "User.h"
 #include "stdio.h"
 
-// parsing
 void where_state_handler(Command_t *cmd, size_t arg_idx) {
 	cmd->where_args.str_con = (char **) malloc(sizeof(char*) * 5);
 	cmd->where_args.int_con_left = (char **) malloc(sizeof(char*) * 5);

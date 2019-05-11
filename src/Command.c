@@ -101,11 +101,17 @@ void cleanup_Command(Command_t *cmd) {
         cmd->cmd_args.sel_args.fields = NULL;
         cmd->cmd_args.sel_args.fields_len = 0;
     }
+
     // where
     cmd->where_args.up = 0;
     cmd->where_args.type = 1;
     cmd->where_args.str_cnt = 0;
     cmd->where_args.int_cnt = 0;
+    // aggre
+    cmd->aggre_args.up = 0;
+    cmd->aggre_args.sum_up = 0;
+    cmd->aggre_args.sum_up = 0;
+
     cmd->type = UNRECOG_CMD;
     cmd->args_len = 0;
 }
