@@ -61,6 +61,7 @@ void where_state_handler(Command_t *cmd, size_t arg_idx) {
         } else if (!strncmp(cmd->args[arg_idx + 3], "or", 2)) {
         	cmd->where_args.type = 2;
         } else {
+            arg_idx += 3;
         	break;
         }
         arg_idx += 4;
