@@ -109,8 +109,10 @@ void cleanup_Command(Command_t *cmd) {
     cmd->where_args.int_cnt = 0;
     // aggre
     cmd->aggre_args.up = 0;
-    cmd->aggre_args.sum_up = 0;
-    cmd->aggre_args.sum_up = 0;
+    cmd->aggre_args.idsum_up = 0;
+    cmd->aggre_args.idavg_up = 0;
+    cmd->aggre_args.agesum_up = 0;
+    cmd->aggre_args.ageavg_up = 0;
 
     cmd->type = UNRECOG_CMD;
     cmd->args_len = 0;
