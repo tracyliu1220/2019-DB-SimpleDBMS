@@ -182,8 +182,8 @@ int update_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd
     idxListLen = set_idxlist(table, &idxList, idxListLen, cmd, 0);
     if (!strncmp(cmd->set_args.field, "id", 2)) {
         if (idxListLen > 1) legal = 0;
-        for (idx = 0; idx < idxListLen; idx ++) {
-            if (get_User(table, idxList[idx])->id == cmd->set_args.set_int)
+        for (idx = 0; idx < table->len; idx ++) {
+            if (get_User(table, idx)->id == cmd->set_args.set_int)
                 legal = 0;
         }
     }
