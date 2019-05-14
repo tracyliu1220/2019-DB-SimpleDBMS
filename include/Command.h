@@ -51,11 +51,9 @@ typedef struct SetArgs {
 
 typedef struct AggreArgs {
     int up;
-    int sum_up, avg_up;
-    char *sum_field;
-    char *avg_field;
-    int sum_result;
-    double avg_result;
+    int idsum_up, idavg_up, agesum_up, ageavg_up;
+    int idsum_result, agesum_result;
+    double idavg_result, ageavg_result;
     int cnt_result;
 } AggreArgs_t;
 
