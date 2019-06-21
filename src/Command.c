@@ -23,6 +23,8 @@ Command_t* new_Command() {
     cmd->args_len = 0;
     cmd->args_cap = 0;
     cmd->where_args.up = 0;
+    cmd->aggre_args.up = 0;
+    cmd->join_args.up = 0;
     return cmd;
 }
 
@@ -113,6 +115,8 @@ void cleanup_Command(Command_t *cmd) {
     cmd->aggre_args.idavg_up = 0;
     cmd->aggre_args.agesum_up = 0;
     cmd->aggre_args.ageavg_up = 0;
+    // join
+    cmd->join_args.up = 0;
 
     cmd->type = UNRECOG_CMD;
     cmd->args_len = 0;

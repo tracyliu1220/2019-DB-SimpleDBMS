@@ -57,15 +57,22 @@ typedef struct AggreArgs {
     int cnt_result;
 } AggreArgs_t;
 
+typedef struct JoinArgs {
+    int up;
+    int rhs; // right hand side field
+} JoinArgs_t;
+
 typedef struct Command {
     unsigned char type;
     char **args;
     size_t args_len;
     size_t args_cap;
+    size_t table1; // 0: user, 1: like
     CmdArg_t cmd_args;
     WhereArgs_t where_args;
     SetArgs_t set_args;
     AggreArgs_t aggre_args;
+    JoinArgs_t join_args;
 } Command_t;
 
 Command_t* new_Command();

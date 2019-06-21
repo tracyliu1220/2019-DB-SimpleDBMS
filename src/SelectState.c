@@ -2,14 +2,13 @@
 #include <stdlib.h>
 #include "Command.h"
 #include "SelectState.h"
-// #include "SetWhere.h"
+#include "SetWhere.h"
 
 void field_state_handler(Command_t *cmd, size_t arg_idx) {
     cmd->cmd_args.sel_args.fields = NULL;
     cmd->cmd_args.sel_args.fields_len = 0;
     cmd->cmd_args.sel_args.limit = -1;
     cmd->cmd_args.sel_args.offset = -1;
-    cmd->aggre_args.up = 0;
     cmd->aggre_args.idsum_up = 0;
     cmd->aggre_args.idavg_up = 0;
     cmd->aggre_args.agesum_up = 0;
@@ -24,6 +23,10 @@ void field_state_handler(Command_t *cmd, size_t arg_idx) {
         } else if (!strncmp(cmd->args[arg_idx], "email", 5)) {
             add_select_field(cmd, cmd->args[arg_idx]);
         } else if (!strncmp(cmd->args[arg_idx], "age", 3)) {
+            add_select_field(cmd, cmd->args[arg_idx]);
+        } else if (!strncmp(cmd->args[arg_idx], "id1", 3)) {
+            add_select_field(cmd, cmd->args[arg_idx]);
+        } else if (!strncmp(cmd->args[arg_idx], "id2", 3)) {
             add_select_field(cmd, cmd->args[arg_idx]);
 
         // aggre
@@ -61,8 +64,12 @@ void field_state_handler(Command_t *cmd, size_t arg_idx) {
 }
 
 void table_state_handler(Command_t *cmd, size_t arg_idx) {
-    if (arg_idx < cmd->args_len
-            && !strncmp(cmd->args[arg_idx], "table", 5)) {
+    if (arg_idx < cmd->args_len) {
+        if (!strncmp(cmd->args[arg_idx], "user", 5)) {
+            cmd->table1 = 0;
+        } else if (!strncmp(cmd->args[arg_idx], "like", 5)) {
+            cmd->table1 = 1;
+        }
 
         arg_idx++;
         if (arg_idx == cmd->args_len) {

@@ -16,6 +16,13 @@ User_t* new_User() {
     return new_user;
 }
 
+Like_t* new_Like() {
+    Like_t *new_like = (Like_t*)malloc(sizeof(Like_t));
+    new_like->id1 = 0;
+    new_like->id2 = 0;
+    return new_like;
+}
+
 ///
 /// Transform from the input cmd to the User_t
 ///
@@ -24,13 +31,26 @@ User_t* command_to_User(Command_t *cmd) {
     if (!user || !cmd) {
         return NULL;
     }
+    if (cmd->args_len != 7) {
+        return NULL;
+    }
+    user->id = atoi(cmd->args[3]);
+    strncpy(user->name, cmd->args[4], MAX_USER_NAME);
+    strncpy(user->email, cmd->args[5], MAX_USER_EMAIL);
+    user->age = atoi(cmd->args[6]);
+    return user;
+}
+
+Like_t* command_to_Like(Command_t *cmd) {
+    Like_t *like = new_Like();
+    if (!like || !cmd) {
+        return NULL;
+    }
     if (cmd->args_len != 5) {
         return NULL;
     }
-    user->id = atoi(cmd->args[1]);
-    strncpy(user->name, cmd->args[2], MAX_USER_NAME);
-    strncpy(user->email, cmd->args[3], MAX_USER_EMAIL);
-    user->age = atoi(cmd->args[4]);
-    return user;
+    like->id1 = atoi(cmd->args[3]);
+    like->id2 = atoi(cmd->args[4]);
+    return like;
 }
 

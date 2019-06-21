@@ -56,6 +56,25 @@ void print_user(User_t *user, SelectArgs_t *sel_args) {
     printf(")\n");
 }
 
+void print_like(Like_t *like, SelectArgs_t *sel_args) {
+    size_t idx;
+    printf("(");
+    for (idx = 0; idx < sel_args->fields_len; idx++) {
+        if (!strncmp(sel_args->fields[idx], "*", 1)) {
+            printf("%d, %d", like->id1, like->id2);
+        } else {
+            if (idx > 0) printf(", ");
+
+            if (!strncmp(sel_args->fields[idx], "id1", 3)) {
+                printf("%d", like->id1);
+            } else if (!strncmp(sel_args->fields[idx], "id2", 3)) {
+                printf("%d", like->id2);
+            }
+        }
+    }
+    printf(")\n");
+}
+
 void print_aggre(SelectArgs_t *sel_args, AggreArgs_t *aggre_args) {
     size_t idx;
     printf("(");
@@ -68,6 +87,26 @@ void print_aggre(SelectArgs_t *sel_args, AggreArgs_t *aggre_args) {
         } else if (!strncmp(sel_args->fields[idx], "sum(age)", 8)) {
             printf("%d", aggre_args->agesum_result);
         } else if (!strncmp(sel_args->fields[idx], "avg(age)", 8)) {
+            printf("%.3lf", aggre_args->ageavg_result);
+        } else if (!strncmp(sel_args->fields[idx], "count", 5)) {
+            printf("%d", aggre_args->cnt_result);
+        }
+    }
+    printf(")\n");
+}
+
+void print_like_aggre(SelectArgs_t *sel_args, AggreArgs_t *aggre_args) {
+    size_t idx;
+    printf("(");
+    for (idx = 0; idx < sel_args->fields_len; idx++) {
+        if (idx > 0) printf(", ");
+        if (!strncmp(sel_args->fields[idx], "sum(id1)", 8)) {
+            printf("%d", aggre_args->idsum_result);
+        } else if (!strncmp(sel_args->fields[idx], "avg(id1)", 8)) {
+            printf("%.3lf", aggre_args->idavg_result);
+        } else if (!strncmp(sel_args->fields[idx], "sum(id2)", 8)) {
+            printf("%d", aggre_args->agesum_result);
+        } else if (!strncmp(sel_args->fields[idx], "avg(id2)", 8)) {
             printf("%.3lf", aggre_args->ageavg_result);
         } else if (!strncmp(sel_args->fields[idx], "count", 5)) {
             printf("%d", aggre_args->cnt_result);
@@ -149,9 +188,9 @@ void print_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd
                 cmd->aggre_args.agesum_result += user->age;
                 cmd->aggre_args.ageavg_result += user->age;
             }
-            if (idxListLen) cmd->aggre_args.idavg_result /= idxListLen;
-            if (idxListLen) cmd->aggre_args.ageavg_result /= idxListLen;
-            cmd->aggre_args.cnt_result = idxListLen;
+            if (table->len) cmd->aggre_args.idavg_result /= table->len;
+            if (table->len) cmd->aggre_args.ageavg_result /= table->len;
+            cmd->aggre_args.cnt_result = table->len;
         }
         if (offset == 0 && (limit > 0 || limit == -1))
             print_aggre(&(cmd->cmd_args.sel_args), &(cmd->aggre_args));
@@ -174,6 +213,45 @@ void print_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd
     }
 }
 
+void print_likes(Table_t *table, Command_t *cmd) {
+    size_t idx;
+    int limit = cmd->cmd_args.sel_args.limit;
+    int offset = cmd->cmd_args.sel_args.offset;
+
+    if (offset == -1) {
+        offset = 0;
+    }
+
+    if (cmd->aggre_args.up) { // aggre
+        cmd->aggre_args.idsum_result = 0;
+        cmd->aggre_args.idavg_result = 0;
+        cmd->aggre_args.agesum_result = 0;
+        cmd->aggre_args.ageavg_result = 0;
+        cmd->aggre_args.cnt_result = 0;
+        
+        for (idx = 0; idx < table->len; idx++) {
+            Like_t *like = get_Like(table, idx);
+            cmd->aggre_args.idsum_result += like->id1;
+            cmd->aggre_args.idavg_result += like->id1;
+            cmd->aggre_args.agesum_result += like->id2;
+            cmd->aggre_args.ageavg_result += like->id2;
+        }
+        if (table->len) cmd->aggre_args.idavg_result /= table->len;
+        if (table->len) cmd->aggre_args.ageavg_result /= table->len;
+        cmd->aggre_args.cnt_result = table->len;
+        
+        if (offset == 0 && (limit > 0 || limit == -1))
+            print_like_aggre(&(cmd->cmd_args.sel_args), &(cmd->aggre_args));
+    } else {
+        for (idx = offset; idx < table->len; idx++) {
+            if (limit != -1 && (idx - offset) >= limit) {
+                break;
+            }
+            print_like(get_Like(table, idx), &(cmd->cmd_args.sel_args));
+        }
+    }
+}
+
 int update_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd) {
     int ret = 1;
     int legal = 1;
@@ -181,16 +259,19 @@ int update_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd
 
     idxListLen = set_idxlist(table, &idxList, idxListLen, cmd, 0);
     if (!strncmp(cmd->set_args.field, "id", 2)) {
-        if (idxListLen > 1) legal = 0;
-        for (idx = 0; idx < table->len; idx ++) {
-            if (get_User(table, idx)->id == cmd->set_args.set_int)
-                legal = 0;
-        }
+        if (idxListLen != 1) legal = 0;
+        if (table->idx.count(cmd->set_args.set_int))
+            legal = 0;
     }
 
     if (cmd->where_args.up && legal) {
         for (idx = 0; idx < idxListLen; idx++)
             update_user(get_User(table, idxList[idx]), &(cmd->set_args));
+        if (!strncmp(cmd->set_args.field, "id", 2)) {
+            User_t *user = get_User(table, idxList[idx]);
+            table->idx.erase(user->id);
+            table->idx.insert(cmd->set_args.set_int);
+        }
     } else if (!cmd->where_args.up && (strncmp(cmd->set_args.field, "id", 2) || table->len <= 1)) {
         for (idx = 0; idx < table->len; idx++) {
             update_user(get_User(table, idx), &(cmd->set_args));
@@ -205,10 +286,12 @@ void delete_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cm
     size_t idx;
     int len = 0;
     idxListLen = set_idxlist(table, &idxList, idxListLen, cmd, 1);
+    table->idx.clear();
 
     if (cmd->where_args.up) {
         for (idx = 0; idx < idxListLen; idx++) {
             table->users[len] = table->users[idxList[idx]];
+            table->idx.insert(table->users[len].id);
             len ++;
         }
     } else {
@@ -262,7 +345,6 @@ int parse_input(char *input, Command_t *cmd) {
 ///
 void handle_builtin_cmd(Table_t *table, Command_t *cmd, State_t *state) {
     if (!strncmp(cmd->args[0], ".exit", 5)) {
-        archive_table(table);
         exit(0);
     } else if (!strncmp(cmd->args[0], ".output", 7)) {
         if (cmd->args_len == 2) {
@@ -279,10 +361,6 @@ void handle_builtin_cmd(Table_t *table, Command_t *cmd, State_t *state) {
                 __fpurge(stdout); //This is used to clear the stdout buffer
             }
         }
-    } else if (!strncmp(cmd->args[0], ".load", 5)) {
-        if (cmd->args_len == 2) {
-            load_table(table, cmd->args[1]);
-        }
     } else if (!strncmp(cmd->args[0], ".help", 5)) {
         print_help_msg();
     }
@@ -292,18 +370,18 @@ void handle_builtin_cmd(Table_t *table, Command_t *cmd, State_t *state) {
 /// Handle query type commands
 /// Return: command type
 ///
-int handle_query_cmd(Table_t *table, Command_t *cmd) {
+int handle_query_cmd(Table_t *user_table, Table_t *like_table, Command_t *cmd) {
     if (!strncmp(cmd->args[0], "insert", 6)) {
-        handle_insert_cmd(table, cmd);
+        handle_insert_cmd(user_table, like_table, cmd);
         return INSERT_CMD;
     } else if (!strncmp(cmd->args[0], "select", 6)) {
-        handle_select_cmd(table, cmd);
+        handle_select_cmd(user_table, like_table, cmd);
         return SELECT_CMD;
     } else if (!strncmp(cmd->args[0], "update", 6)) {
-        handle_update_cmd(table, cmd);
+        handle_update_cmd(user_table, cmd);
         return SELECT_CMD;
     } else if (!strncmp(cmd->args[0], "delete", 6)) {
-        handle_delete_cmd(table, cmd);
+        handle_delete_cmd(user_table, cmd);
         return SELECT_CMD;
     } else {
         return UNRECOG_CMD;
@@ -315,13 +393,23 @@ int handle_query_cmd(Table_t *table, Command_t *cmd) {
 /// If the insert operation success, then change the input arg
 /// `cmd->type` to INSERT_CMD
 ///
-int handle_insert_cmd(Table_t *table, Command_t *cmd) {
+int handle_insert_cmd(Table_t *user_table, Table_t *like_table, Command_t *cmd) {
     int ret = 0;
-    User_t *user = command_to_User(cmd);
-    if (user) {
-        ret = add_User(table, user);
-        if (ret > 0) {
-            cmd->type = INSERT_CMD;
+    if (!strncmp(cmd->args[2], "user", 4)) {
+        User_t *user = command_to_User(cmd);
+        if (user) {
+            ret = add_User(user_table, user);
+            if (ret > 0) {
+                cmd->type = INSERT_CMD;
+            }
+        }
+    } else if (!strncmp(cmd->args[2], "like", 4)) {
+        Like_t *like = command_to_Like(cmd);
+        if (like) {
+            ret = add_Like(like_table, like);
+            if (ret > 0) {
+                cmd->type = INSERT_CMD;
+            }
         }
     }
     return ret;
@@ -332,27 +420,32 @@ int handle_insert_cmd(Table_t *table, Command_t *cmd) {
 /// If the select operation success, then change the input arg
 /// `cmd->type` to SELECT_CMD
 ///
-int handle_select_cmd(Table_t *table, Command_t *cmd) {
+int handle_select_cmd(Table_t *user_table, Table_t *like_table, Command_t *cmd) {
     cmd->type = SELECT_CMD;
     field_state_handler(cmd, 1);
 
-    print_users(table, NULL, 0, cmd);
-    return table->len;
+    if (cmd->table1 == 0) {
+        print_users(user_table, NULL, 0, cmd);
+        return user_table->len;
+    } else {
+        print_likes(like_table, cmd);
+        return like_table->len;
+    }
 }
 
-int handle_update_cmd(Table_t *table, Command_t *cmd) {
+int handle_update_cmd(Table_t *user_table, Command_t *cmd) {
     int ret = 0;
     set_state_handler(cmd, 3);
-    update_users(table, NULL, 0, cmd);
+    update_users(user_table, NULL, 0, cmd);
     return ret;
 }
 
-int handle_delete_cmd(Table_t *table, Command_t *cmd) {
+int handle_delete_cmd(Table_t *user_table, Command_t *cmd) {
     int ret = 0;
     if (cmd->args_len > 3 && !strncmp(cmd->args[3], "where", 5))
         where_state_handler(cmd, 4);
 
-    delete_users(table, NULL, 0, cmd);
+    delete_users(user_table, NULL, 0, cmd);
     return ret;
 }
 
