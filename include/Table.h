@@ -9,7 +9,7 @@
 #include "User.h"
 using namespace std;
 
-#define INIT_TABLE_SIZE 10000
+#define INIT_TABLE_SIZE 100000
 #define EXT_LEN 500
 
 typedef struct Table {
