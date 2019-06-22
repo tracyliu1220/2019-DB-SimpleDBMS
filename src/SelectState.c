@@ -46,6 +46,24 @@ void field_state_handler(Command_t *cmd, int arg_idx) {
             cmd->aggre_args.up = 1;
             cmd->aggre_args.ageavg_up = 1;
             add_select_field(cmd, cmd->args[arg_idx]);
+
+        } else if (!strncmp(cmd->args[arg_idx], "sum(id1)", 8)) {
+            cmd->aggre_args.up = 1;
+            cmd->aggre_args.idsum_up = 1;
+            add_select_field(cmd, cmd->args[arg_idx]);
+        } else if (!strncmp(cmd->args[arg_idx], "avg(id1)", 8)) {
+            cmd->aggre_args.up = 1;
+            cmd->aggre_args.idavg_up = 1;
+            add_select_field(cmd, cmd->args[arg_idx]);
+        } else if (!strncmp(cmd->args[arg_idx], "sum(id2)", 8)) {
+            cmd->aggre_args.up = 1;
+            cmd->aggre_args.agesum_up = 1;
+            add_select_field(cmd, cmd->args[arg_idx]);
+        } else if (!strncmp(cmd->args[arg_idx], "avg(id2)", 8)) {
+            cmd->aggre_args.up = 1;
+            cmd->aggre_args.ageavg_up = 1;
+            add_select_field(cmd, cmd->args[arg_idx]);
+
         } else if (!strncmp(cmd->args[arg_idx], "count", 5)) {
             cmd->aggre_args.up = 1;
             add_select_field(cmd, cmd->args[arg_idx]);
