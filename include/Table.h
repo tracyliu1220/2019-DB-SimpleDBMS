@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <set>
 #include <map>
+#include <vector>
+#include <string>
 #include "User.h"
 using namespace std;
 
@@ -19,6 +21,9 @@ typedef struct Table {
     set<unsigned int> idx1;
     map<unsigned int, unsigned int> idx2;
     size_t dirty;
+    size_t triggered;
+    vector<int> ages;
+    vector<int> id_by_ages;
 } Table_t;
 
 Table_t *new_Table();

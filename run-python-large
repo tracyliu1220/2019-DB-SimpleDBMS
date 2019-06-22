@@ -1,0 +1,6 @@
+#!/bin/bash
+
+make clean
+make
+python3 test/system/generate_testcase.py --user_num $*
+python3 test/system/system_test.py ./shell large

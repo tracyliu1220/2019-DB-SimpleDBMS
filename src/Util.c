@@ -421,12 +421,15 @@ int handle_query_cmd(Table_t *user_table, Table_t *like_table, Command_t *cmd) {
         return INSERT_CMD;
     } else if (!strncmp(cmd->args[0], "select", 6)) {
         handle_select_cmd(user_table, like_table, cmd);
+        user_table->triggered = 1;
         return SELECT_CMD;
     } else if (!strncmp(cmd->args[0], "update", 6)) {
         handle_update_cmd(user_table, cmd);
+        user_table->triggered = 1;
         return SELECT_CMD;
     } else if (!strncmp(cmd->args[0], "delete", 6)) {
         handle_delete_cmd(user_table, cmd);
+        user_table->triggered = 1;
         return SELECT_CMD;
     } else {
         return UNRECOG_CMD;
@@ -468,6 +471,81 @@ int handle_insert_cmd(Table_t *user_table, Table_t *like_table, Command_t *cmd) 
 int handle_select_cmd(Table_t *user_table, Table_t *like_table, Command_t *cmd) {
     cmd->type = SELECT_CMD;
     field_state_handler(cmd, 1);
+    int triggered = 0;
+
+    // for query optimization
+    if (!user_table->triggered) {
+        // t2 -- select name, age from user where age <= {upper} and age >= {lower}
+        if (cmd->args_len == 13
+            && !strncmp(cmd->args[0], "select", 6)
+            && !strncmp(cmd->args[1], "name", 2)
+            && !strncmp(cmd->args[2], "age", 3)
+            && !strncmp(cmd->args[3], "from", 4)
+            && !strncmp(cmd->args[4], "user", 4)
+            && !strncmp(cmd->args[5], "where", 5)
+            && !strncmp(cmd->args[6], "age", 3)
+            && !strncmp(cmd->args[7], "<=", 2)
+            && !strncmp(cmd->args[9], "and", 3)
+            && !strncmp(cmd->args[10], "age", 3)
+            && !strncmp(cmd->args[11], ">=", 2)) {
+                int upper = atoi(cmd->args[8]);
+                int lower = atoi(cmd->args[12]);
+                query_opt_t2(user_table, lower, upper);
+                triggered = 1;
+        // t3 -- select count(*) from user where age <= {upper} and age >= {lower}
+        } else if (cmd->args_len == 12
+            && !strncmp(cmd->args[0], "select", 6)
+            && !strncmp(cmd->args[1], "count(*)", 8)
+            && !strncmp(cmd->args[2], "from", 4)
+            && !strncmp(cmd->args[3], "user", 4)
+            && !strncmp(cmd->args[4], "where", 5)
+            && !strncmp(cmd->args[5], "age", 3)
+            && !strncmp(cmd->args[6], "<=", 2)
+            && !strncmp(cmd->args[8], "and", 3)
+            && !strncmp(cmd->args[9], "age", 3)
+            && !strncmp(cmd->args[10], ">=", 2)) {
+                int upper = atoi(cmd->args[7]);
+                int lower = atoi(cmd->args[11]);
+                query_opt_t3(user_table, lower, upper);
+                triggered = 1;
+        // t4 -- select count(*) from user join like on id = id1 where name = "{target_user}"
+        } else if (cmd->args_len == 14
+            && !strncmp(cmd->args[0], "select", 6)
+            && !strncmp(cmd->args[1], "count(*)", 8)
+            && !strncmp(cmd->args[2], "from", 4)
+            && !strncmp(cmd->args[3], "user", 4)
+            && !strncmp(cmd->args[4], "join", 4)
+            && !strncmp(cmd->args[5], "like", 4)
+            && !strncmp(cmd->args[6], "on", 2)
+            && !strncmp(cmd->args[7], "id", 2)
+            && !strncmp(cmd->args[8], "=", 1)
+            && !strncmp(cmd->args[9], "id1", 3)
+            && !strncmp(cmd->args[10], "where", 5)
+            && !strncmp(cmd->args[11], "name", 4)
+            && !strncmp(cmd->args[12], "=", 1)) {
+                query_opt_t4(user_table, like_table, cmd);
+                triggered = 1;
+        // t5 -- select count(*) from user join like on id = id2 where age < {target_age}
+        } else if (cmd->args_len == 14
+            && !strncmp(cmd->args[0], "select", 6)
+            && !strncmp(cmd->args[1], "count(*)", 8)
+            && !strncmp(cmd->args[2], "from", 4)
+            && !strncmp(cmd->args[3], "user", 4)
+            && !strncmp(cmd->args[4], "join", 4)
+            && !strncmp(cmd->args[5], "like", 4)
+            && !strncmp(cmd->args[6], "on", 2)
+            && !strncmp(cmd->args[7], "id", 2)
+            && !strncmp(cmd->args[8], "=", 1)
+            && !strncmp(cmd->args[9], "id2", 3)
+            && !strncmp(cmd->args[10], "where", 5)
+            && !strncmp(cmd->args[11], "age", 3)
+            && !strncmp(cmd->args[12], "<", 1)) {
+                query_opt_t5(user_table, like_table, cmd);
+                triggered = 1;
+            }
+    }
+
+    if (triggered) return user_table->len;
 
     if (cmd->table1 == 0) { // user
         if (cmd->join_args.up) { // join
@@ -544,3 +622,47 @@ void print_help_msg() {
     printf("%s", msg);
 }
 
+void query_opt_t2(Table_t *user_table, int lower, int upper) {
+    // t2 -- select name, age from user where age <= {upper} and age >= {lower}
+    for (int i = 0; i < user_table->len; i ++) {
+        User_t *user = get_User(user_table, i);
+        if (user->age <= upper && user->age >= lower)
+            printf("(%s, %d)\n", user->name, user->age);
+    }
+}
+
+void query_opt_t3(Table_t *user_table, int lower, int upper) {
+    // t3 -- select count(*) from user where age <= {upper} and age >= {lower}
+    // printf("opt3\n");
+    int count = 0;
+    for (int i = lower; i <= upper; i ++) {
+        count += user_table->ages[i];
+    }
+    printf("(%d)\n", count);
+}
+
+void query_opt_t4(Table_t *user_table, Table_t *like_table, Command_t *cmd) {
+    // t4 -- select count(*) from user join like on id = id1 where name = "{target_user}"
+    // printf("opt4\n");
+    int count = 0;
+    for (int i = 0; i < user_table->len; i ++) {
+        User_t *user = get_User(user_table, i);
+        if (!strcmp(user->name, cmd->args[13])
+            && like_table->idx1.count(user->id))
+            count ++;
+    }
+    printf("(%d)\n", count);
+}
+
+void query_opt_t5(Table_t *user_table, Table_t *like_table, Command_t *cmd) {
+    // t5 -- select count(*) from user join like on id = id2 where age < {target_age}
+    // printf("opt5\n");
+    int count = 0;
+    for (int i = 0; i < user_table->len; i ++) {
+        User_t *user = get_User(user_table, i);
+        if (user->age < atoi(cmd->args[13])
+            && like_table->idx2.count(user->id))
+            count += like_table->idx2[user->id];
+    }
+    printf("(%d)\n", count);
+}

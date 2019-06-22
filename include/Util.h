@@ -27,6 +27,11 @@ int handle_select_cmd(Table_t *user_table, Table_t *like_table, Command_t *cmd);
 int handle_update_cmd(Table_t *user_table, Command_t *cmd);
 int handle_delete_cmd(Table_t *user_table, Command_t *cmd);
 
+void query_opt_t2(Table_t *user_table, int lower, int upper);
+void query_opt_t3(Table_t *user_table, int lower, int upper);
+void query_opt_t4(Table_t *user_table, Table_t *like_table, Command_t *cmd);
+void query_opt_t5(Table_t *user_table, Table_t *like_table, Command_t *cmd);
+
 void print_help_msg();
 
 #endif

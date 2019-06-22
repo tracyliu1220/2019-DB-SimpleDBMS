@@ -2,6 +2,8 @@
 #include <string.h>
 #include <set>
 #include <map>
+#include <vector>
+#include <string>
 #include <sys/stat.h>
 #include "Table.h"
 using namespace std;
@@ -20,9 +22,11 @@ Table_t *new_Table() {
     table->likes = (Like_t*)malloc(
                             sizeof(Like_t) * INIT_TABLE_SIZE);
     table->dirty = 1;
+    table->triggered = 0;
     table->idx = set<unsigned int>();
     table->idx1 = set<unsigned int>();
     table->idx2 = map<unsigned int, unsigned int>();
+    table->ages = vector<int>(100);
     return table;
 }
 
@@ -33,7 +37,7 @@ Table_t *new_Table() {
 /// return 1 when the data successfully add to table
 ///
 int add_User(Table_t *table, User_t *user) {
-    size_t idx;
+    int idx;
     if (!table || !user) {
         return 0;
     }
@@ -55,6 +59,7 @@ int add_User(Table_t *table, User_t *user) {
     memcpy((table->users)+idx, user, sizeof(User_t));
     table->len++;
     table->dirty = 1;
+    table->ages[user->age] ++;
     return 1;
 }
 
