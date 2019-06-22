@@ -300,6 +300,51 @@ void delete_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cm
     table->len = len;
 }
 
+void join_tables(Table_t *user_table, Table_t *like_table, int *idxList, size_t idxListLen, Command_t *cmd) {
+    size_t idx;
+    int limit = cmd->cmd_args.sel_args.limit;
+    int offset = cmd->cmd_args.sel_args.offset;
+
+    if (offset == -1) {
+        offset = 0;
+    }
+
+    int count = 0;
+    idxListLen = set_idxlist(user_table, &idxList, idxListLen, cmd, 0);
+
+    if (cmd->where_args.up) {
+        for (idx = offset; idx < idxListLen; idx++) {
+            if (limit != -1 && (idx - offset) >= limit) {
+                break;
+            }
+            User_t *user = get_User(user_table, idxList[idx]);
+            if (cmd->join_args.rhs == 1 
+                && like_table->idx1.count(user->id)) {
+                count ++;
+            } else if (cmd->join_args.rhs == 2 
+                && like_table->idx2.count(user->id)) {
+                count += like_table->idx2[user->id];
+            }
+        }
+    } else {
+        for (idx = offset; idx < user_table->len; idx++) {
+            if (limit != -1 && (idx - offset) >= limit) {
+                break;
+            }
+            User_t *user = get_User(user_table, idx);
+            if (cmd->join_args.rhs == 1 
+                && like_table->idx1.count(user->id)) {
+                count ++;
+            } else if (cmd->join_args.rhs == 2 
+                && like_table->idx2.count(user->id)) {
+                count += like_table->idx2[user->id];
+            }
+        }
+    }
+    if (offset == 0 && (limit > 0 || limit == -1))
+        printf("(%d)\n", count);
+}
+
 ///
 /// This function received an output argument
 /// Return: category of the command
@@ -424,9 +469,13 @@ int handle_select_cmd(Table_t *user_table, Table_t *like_table, Command_t *cmd) 
     cmd->type = SELECT_CMD;
     field_state_handler(cmd, 1);
 
-    if (cmd->table1 == 0) {
-        print_users(user_table, NULL, 0, cmd);
-        return user_table->len;
+    if (cmd->table1 == 0) { // user
+        if (cmd->join_args.up) { // join
+            join_tables(user_table, like_table, NULL, 0, cmd);
+        } else {
+            print_users(user_table, NULL, 0, cmd);
+            return user_table->len;
+        }
     } else {
         print_likes(like_table, cmd);
         return like_table->len;

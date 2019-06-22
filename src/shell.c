@@ -13,11 +13,11 @@ int main(int argc, char **argv) {
     Table_t *like_table = NULL;
     int cmd_type;
     if (argc != 2) {
-        user_table = new_Table(NULL);
-        like_table = new_Table(NULL);
+        user_table = new_Table();
+        like_table = new_Table();
     } else {
-        user_table = new_Table(argv[1]);
-        like_table = new_Table(argv[1]);
+        user_table = new_Table();
+        like_table = new_Table();
     }
     if (user_table == NULL || like_table == NULL) {
         return 1;
