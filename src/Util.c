@@ -475,10 +475,23 @@ int handle_select_cmd(Table_t *user_table, Table_t *like_table, Command_t *cmd) 
 
     // for query optimization
     if (!user_table->triggered) {
-        // t2 -- select name, age from user where age <= {upper} and age >= {lower}
-        if (cmd->args_len == 13
+        // t1 -- select id, name from user offset <offset num> limit <limit num> 
+        if (cmd->args_len == 9
             && !strncmp(cmd->args[0], "select", 6)
-            && !strncmp(cmd->args[1], "name", 2)
+            && !strncmp(cmd->args[1], "id", 2)
+            && !strncmp(cmd->args[2], "name", 4)
+            && !strncmp(cmd->args[3], "from", 4)
+            && !strncmp(cmd->args[4], "user", 4)
+            && !strncmp(cmd->args[5], "offset", 6)
+            && !strncmp(cmd->args[7], "limit", 5)) {
+                int offset = atoi(cmd->args[6]);
+                int limit = atoi(cmd->args[8]);
+                query_opt_t1(user_table, offset, limit);
+                triggered = 1;
+        // t2 -- select name, age from user where age <= {upper} and age >= {lower}
+        } else if (cmd->args_len == 13
+            && !strncmp(cmd->args[0], "select", 6)
+            && !strncmp(cmd->args[1], "name", 4)
             && !strncmp(cmd->args[2], "age", 3)
             && !strncmp(cmd->args[3], "from", 4)
             && !strncmp(cmd->args[4], "user", 4)
@@ -620,6 +633,18 @@ void print_help_msg() {
     "\tThis cmd will display all user records in the table.\n"
     "\n";
     printf("%s", msg);
+}
+
+void query_opt_t1(Table_t *user_table, int offset, int limit) {
+    // t1 -- select id, name from user offset <offset num> limit <limit num> 
+    // printf("opt1\n");
+    for (int i = offset; i < user_table->len; i++) {
+        if (limit != -1 && (i - offset) >= limit) {
+            break;
+        }
+        User_t *user = get_User(user_table, i);
+        printf("(%d, %s)\n", user->id, user->name);
+    }
 }
 
 void query_opt_t2(Table_t *user_table, int lower, int upper) {
