@@ -4,7 +4,7 @@
 #include "SelectState.h"
 #include "SetWhere.h"
 
-void field_state_handler(Command_t *cmd, size_t arg_idx) {
+void field_state_handler(Command_t *cmd, int arg_idx) {
     cmd->cmd_args.sel_args.fields = NULL;
     cmd->cmd_args.sel_args.fields_len = 0;
     cmd->cmd_args.sel_args.limit = -1;
@@ -63,7 +63,7 @@ void field_state_handler(Command_t *cmd, size_t arg_idx) {
     return;
 }
 
-void table_state_handler(Command_t *cmd, size_t arg_idx) {
+void table_state_handler(Command_t *cmd, int arg_idx) {
     if (arg_idx < cmd->args_len) {
         if (!strncmp(cmd->args[arg_idx], "user", 4)) {
             cmd->table1 = 0;
@@ -92,7 +92,7 @@ void table_state_handler(Command_t *cmd, size_t arg_idx) {
     return;
 }
 
-void offset_state_handler(Command_t *cmd, size_t arg_idx) {
+void offset_state_handler(Command_t *cmd, int arg_idx) {
     if (arg_idx < cmd->args_len) {
         cmd->cmd_args.sel_args.offset = atoi(cmd->args[arg_idx]);
 
@@ -111,7 +111,7 @@ void offset_state_handler(Command_t *cmd, size_t arg_idx) {
     return;
 }
 
-void limit_state_handler(Command_t *cmd, size_t arg_idx) {
+void limit_state_handler(Command_t *cmd, int arg_idx) {
     if (arg_idx < cmd->args_len) {
         cmd->cmd_args.sel_args.limit = atoi(cmd->args[arg_idx]);
 
@@ -125,7 +125,7 @@ void limit_state_handler(Command_t *cmd, size_t arg_idx) {
     return;
 }
 
-void join_state_handler(Command_t *cmd, size_t arg_idx) {
+void join_state_handler(Command_t *cmd, int arg_idx) {
     if (arg_idx < cmd->args_len) {
         arg_idx += 4;
         if (!strncmp(cmd->args[arg_idx], "id1", 3))

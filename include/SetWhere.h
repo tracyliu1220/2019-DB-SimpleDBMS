@@ -5,9 +5,9 @@
 #include "User.h"
 #include "stdio.h"
 
-void where_state_handler(Command_t *cmd, size_t arg_idx);
+void where_state_handler(Command_t *cmd, int arg_idx);
 
-void set_state_handler(Command_t *cmd, size_t arg_idx);
+void set_state_handler(Command_t *cmd, int arg_idx);
 
 // true or false
 int where_test(Command_t *cmd, User_t *user);

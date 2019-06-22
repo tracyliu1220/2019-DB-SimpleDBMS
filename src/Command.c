@@ -89,7 +89,7 @@ int add_select_field(Command_t *cmd, const char *argument) {
 /// Free the allocated arguments, but without free the argument buffer
 ///
 void cleanup_Command(Command_t *cmd) {
-    size_t idx;
+    int idx;
     for (idx = 0; idx < cmd->args_cap; idx++) {
         free(cmd->args[idx]);
         cmd->args[idx] = NULL;

@@ -9,10 +9,10 @@ typedef struct State {
 
 State_t* new_State();
 void print_prompt(State_t *state);
-size_t set_idxlist(Table_t *table, int **idxList, size_t idxListLen, Command_t *cmd, int state);
+int set_idxlist(Table_t *table, int **idxList, int idxListLen, Command_t *cmd, int state);
 
 void print_user(User_t *user, SelectArgs_t *sel_args);
-void print_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd);
+void print_users(Table_t *table, int *idxList, int idxListLen, Command_t *cmd);
 
 void print_like(Like_t *like, SelectArgs_t *sel_args);
 void print_likes(Table_t *table, Command_t *cmd);

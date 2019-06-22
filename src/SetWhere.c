@@ -5,7 +5,7 @@
 #include "User.h"
 #include "stdio.h"
 
-void where_state_handler(Command_t *cmd, size_t arg_idx) {
+void where_state_handler(Command_t *cmd, int arg_idx) {
 	cmd->where_args.str_con = (char **) malloc(sizeof(char*) * 5);
 	cmd->where_args.int_con_left = (char **) malloc(sizeof(char*) * 5);
 	cmd->where_args.type = 0;
@@ -16,7 +16,7 @@ void where_state_handler(Command_t *cmd, size_t arg_idx) {
     	    char *src1 = cmd->args[arg_idx];
     	    char *src2 = cmd->args[arg_idx + 2];
     	    char *logic = cmd->args[arg_idx + 1];
-    	    int logic_mark;
+    	    int logic_mark = 0;
     	    int str_cnt = cmd->where_args.str_cnt;
     	    int int_cnt = cmd->where_args.int_cnt;
     	    int if_str = 0;
@@ -86,7 +86,7 @@ void where_state_handler(Command_t *cmd, size_t arg_idx) {
     }
 }
 
-void set_state_handler(Command_t *cmd, size_t arg_idx) {
+void set_state_handler(Command_t *cmd, int arg_idx) {
 	int set_type = 0;
 	if (!strncmp(cmd->args[arg_idx], "name", 4)
 		|| !strncmp(cmd->args[arg_idx], "email", 5))

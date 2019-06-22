@@ -34,7 +34,7 @@ void print_prompt(State_t *state) {
 /// Print the user in the specific format
 ///
 void print_user(User_t *user, SelectArgs_t *sel_args) {
-    size_t idx;
+    int idx;
     printf("(");
     for (idx = 0; idx < sel_args->fields_len; idx++) {
         if (!strncmp(sel_args->fields[idx], "*", 1)) {
@@ -57,7 +57,7 @@ void print_user(User_t *user, SelectArgs_t *sel_args) {
 }
 
 void print_like(Like_t *like, SelectArgs_t *sel_args) {
-    size_t idx;
+    int idx;
     printf("(");
     for (idx = 0; idx < sel_args->fields_len; idx++) {
         if (!strncmp(sel_args->fields[idx], "*", 1)) {
@@ -76,7 +76,7 @@ void print_like(Like_t *like, SelectArgs_t *sel_args) {
 }
 
 void print_aggre(SelectArgs_t *sel_args, AggreArgs_t *aggre_args) {
-    size_t idx;
+    int idx;
     printf("(");
     for (idx = 0; idx < sel_args->fields_len; idx++) {
         if (idx > 0) printf(", ");
@@ -96,7 +96,7 @@ void print_aggre(SelectArgs_t *sel_args, AggreArgs_t *aggre_args) {
 }
 
 void print_like_aggre(SelectArgs_t *sel_args, AggreArgs_t *aggre_args) {
-    size_t idx;
+    int idx;
     printf("(");
     for (idx = 0; idx < sel_args->fields_len; idx++) {
         if (idx > 0) printf(", ");
@@ -128,8 +128,8 @@ void update_user(User_t *user, SetArgs_t *set_args) {
 }
 
 // state = 1 if where not in, ex. delete
-size_t set_idxlist(Table_t *table, int **idxList, size_t idxListLen, Command_t *cmd, int state) {
-    size_t idxListCap = idxListLen;
+int set_idxlist(Table_t *table, int **idxList, int idxListLen, Command_t *cmd, int state) {
+    int idxListCap = idxListLen;
     for (int i = 0; i < table->len; i ++) {
         User_t* user = get_User(table, i);
 
@@ -152,8 +152,8 @@ size_t set_idxlist(Table_t *table, int **idxList, size_t idxListLen, Command_t *
 ///
 /// Print the users for given offset and limit restriction
 ///
-void print_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd) {
-    size_t idx;
+void print_users(Table_t *table, int *idxList, int idxListLen, Command_t *cmd) {
+    int idx;
     int limit = cmd->cmd_args.sel_args.limit;
     int offset = cmd->cmd_args.sel_args.offset;
 
@@ -214,7 +214,7 @@ void print_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd
 }
 
 void print_likes(Table_t *table, Command_t *cmd) {
-    size_t idx;
+    int idx;
     int limit = cmd->cmd_args.sel_args.limit;
     int offset = cmd->cmd_args.sel_args.offset;
 
@@ -252,10 +252,10 @@ void print_likes(Table_t *table, Command_t *cmd) {
     }
 }
 
-int update_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd) {
+int update_users(Table_t *table, int *idxList, int idxListLen, Command_t *cmd) {
     int ret = 1;
     int legal = 1;
-    size_t idx;
+    int idx;
 
     idxListLen = set_idxlist(table, &idxList, idxListLen, cmd, 0);
     if (!strncmp(cmd->set_args.field, "id", 2)) {
@@ -282,8 +282,8 @@ int update_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd
     return ret;
 }
 
-void delete_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cmd) {
-    size_t idx;
+void delete_users(Table_t *table, int *idxList, int idxListLen, Command_t *cmd) {
+    int idx;
     int len = 0;
     idxListLen = set_idxlist(table, &idxList, idxListLen, cmd, 1);
     table->idx.clear();
@@ -300,8 +300,8 @@ void delete_users(Table_t *table, int *idxList, size_t idxListLen, Command_t *cm
     table->len = len;
 }
 
-void join_tables(Table_t *user_table, Table_t *like_table, int *idxList, size_t idxListLen, Command_t *cmd) {
-    size_t idx;
+void join_tables(Table_t *user_table, Table_t *like_table, int *idxList, int idxListLen, Command_t *cmd) {
+    int idx;
     int limit = cmd->cmd_args.sel_args.limit;
     int offset = cmd->cmd_args.sel_args.offset;
 
@@ -472,6 +472,7 @@ int handle_select_cmd(Table_t *user_table, Table_t *like_table, Command_t *cmd) 
     if (cmd->table1 == 0) { // user
         if (cmd->join_args.up) { // join
             join_tables(user_table, like_table, NULL, 0, cmd);
+            return user_table->len;
         } else {
             print_users(user_table, NULL, 0, cmd);
             return user_table->len;

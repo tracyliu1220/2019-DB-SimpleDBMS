@@ -11,8 +11,8 @@ using namespace std;
 #define EXT_LEN 500
 
 typedef struct Table {
-    size_t capacity;
-    size_t len;
+    int capacity;
+    int len;
     User_t *users;
     Like_t *likes;
     set<unsigned int> idx;

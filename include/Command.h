@@ -22,7 +22,7 @@ extern CMD_t cmd_list[];
 
 typedef struct SelectArgs {
     char **fields;
-    size_t fields_len;
+    int fields_len;
     int offset;
     int limit;
 } SelectArgs_t;
@@ -65,9 +65,9 @@ typedef struct JoinArgs {
 typedef struct Command {
     unsigned char type;
     char **args;
-    size_t args_len;
-    size_t args_cap;
-    size_t table1; // 0: user, 1: like
+    int args_len;
+    int args_cap;
+    int table1; // 0: user, 1: like
     CmdArg_t cmd_args;
     WhereArgs_t where_args;
     SetArgs_t set_args;
